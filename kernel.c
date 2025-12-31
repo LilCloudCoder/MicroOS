@@ -78,8 +78,8 @@ void kernel_main(void) {
     for(int i=0; i<80*25; i++) VGA_ADDR[i] = (color<<8)|' ';
     update_cursor(0,0);
     
-    k_print("MicroOS v8. Fixed Map.\n", &x, &y, 0x0E);
-    k_print("Try: echo Hello > file\n", &x, &y, 0x07);
+    k_print("MicroOS v1.0 \n", &x, &y, 0x0E);
+    k_print("Commands: ls, touch, echo, cat, clear, color\n", &x, &y, 0x07);
     k_print("$ ", &x, &y, 0x0A);
     
     char buf[128];

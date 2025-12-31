@@ -1,4 +1,4 @@
-/* MicroOS v7: Shift Key Support */
+/* MicroOS v8: Lookup Table Keyboard */
 
 #define VGA_ADDR ((volatile unsigned short*)0xB8000)
 
@@ -50,6 +50,27 @@ void k_print(const char* s, int* x, int* y, int color) {
 
 typedef struct { char name[12]; int used; char content[64]; int size; } File;
 
+// KEYBOARD TABLES
+// 0 means no char (like ctrl, alt, F-keys)
+const char kbd_US[128] = {
+    0,  27, '1','2','3','4','5','6','7','8','9','0','-','=', '\b', // 0x00 - 0x0E
+    '\t','q','w','e','r','t','y','u','i','o','p','[',']','\n',    // 0x0F - 0x1C
+    0,  'a','s','d','f','g','h','j','k','l',';','\'','`',          // 0x1D - 0x29
+   0, '\\','z','x','c','v','b','n','m',',','.','/', 0,              // 0x2A - 0x36 (0x2A is LShift)
+   '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                 // 0x37 - 0x45
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, 0, '+'                  // Rest...
+};
+
+const char kbd_US_shift[128] = {
+    0,  27, '!','@','#','$','%','^','&','*','(',')','_','+', '\b', // 0x00 - 0x0E
+    '\t','Q','W','E','R','T','Y','U','I','O','P','{','}','\n',    // 0x0F - 0x1C
+    0,  'A','S','D','F','G','H','J','K','L',':','\"','~',          // 0x1D - 0x29
+   0, '|','Z','X','C','V','B','N','M','<','>','?', 0,              // 0x2A - 0x36
+   '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                 
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, 0, '+'
+};
+
+
 void kernel_main(void) {
     int x=0; int y=0;
     int color = 0x0B;
@@ -57,8 +78,8 @@ void kernel_main(void) {
     for(int i=0; i<80*25; i++) VGA_ADDR[i] = (color<<8)|' ';
     update_cursor(0,0);
     
-    k_print("MicroOS v7. Shift Supported.\n", &x, &y, 0x0E);
-    k_print("Try: echo \"Hello\" >> file\n", &x, &y, 0x07);
+    k_print("MicroOS v8. Fixed Map.\n", &x, &y, 0x0E);
+    k_print("Try: echo Hello > file\n", &x, &y, 0x07);
     k_print("$ ", &x, &y, 0x0A);
     
     char buf[128];
@@ -67,47 +88,24 @@ void kernel_main(void) {
     File fs[8];
     for(int i=0;i<8;i++) { fs[i].used=0; fs[i].size=0; }
     
-    const char* map_l = "1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./";
-    const char* map_u = "!@#$%^&*()_+\b\tQWERTYUIOP{}\n\0ASDFGHJKL:\"~\0|ZXCVBNM<>?";
-    /*
-       Scancode offsets:
-       0x02 - 0x0D: 1...=
-       0x10 - 0x1B: q... ]
-       0x1E - 0x28: a...'
-       0x2C - 0x35: z.../
-    */
-    
     int shift = 0;
     
     while(1) {
         if((inb(0x64)&1)) {
             unsigned char s = inb(0x60);
             
-            // Shift check
-            if(s == 0x2A || s == 0x36) { shift = 1; continue; }
-            if(s == 0xAA || s == 0xB6) { shift = 0; continue; }
+            // Shift Logic
+            if(s == 0x2A || s == 0x36) { shift = 1; continue; } // Press
+            if(s == 0xAA || s == 0xB6) { shift = 0; continue; } // Release
             
             if(!(s & 0x80)) {
+                // Lookup
                 char c = 0;
-                
-                if(s==0x39) c=' ';
-                else if(s==0x0E) c='\b';
-                else if(s==0x1C) c='\n';
-                else {
-                    // Logic to pull from maps based on ranges
-                    int idx = -1;
-                    if(s>=0x02 && s<=0x0D) idx = s - 0x02;
-                    else if(s>=0x10 && s<=0x1B) idx = 12 + (s - 0x10);
-                    else if(s>=0x1E && s<=0x28) idx = 24 + (s - 0x1E); // includes ' at 0x28
-                    else if(s>=0x2B && s<=0x35) idx = 36 + (s - 0x2B); // \ z...m , . /
-                    
-                    if(idx >= 0 && idx < 50) {
-                        c = shift ? map_u[idx] : map_l[idx];
-                    }
+                if(s < 128) {
+                    c = shift ? kbd_US_shift[s] : kbd_US[s];
                 }
-
+                
                 if(c) {
-                    // debounce simple
                     for(volatile int d=0; d<400000; d++); 
                     
                     if(c == '\n') {
@@ -117,7 +115,8 @@ void kernel_main(void) {
                         // Parse Redirection logic
                         int redirect_idx = -1;
                         for(int k=0; k<len-1; k++) {
-                            if(buf[k]=='>' && buf[k+1]=='>') {
+                            // Support both > and >>
+                            if(buf[k]=='>') {
                                 redirect_idx = k; break;
                             }
                         }
@@ -128,7 +127,9 @@ void kernel_main(void) {
                         
                         // Handler
                          if(redirect_idx != -1) {
-                             int fstart = redirect_idx+2;
+                             // Check for >>
+                             int append = (buf[redirect_idx+1]=='>');
+                             int fstart = redirect_idx + (append?2:1);
                              while(buf[fstart]==' ') fstart++;
                              char fname[12]={0}; int fi=0;
                              while(buf[fstart] && buf[fstart]!=' ' && fi<11) fname[fi++]=buf[fstart++];
@@ -143,12 +144,21 @@ void kernel_main(void) {
                              
                              int f=-1;
                              for(int k=0;k<8;k++) if(fs[k].used && str_eq(fs[k].name, fname)) { f=k; break; }
+                             
+                             if(f==-1 && !append) { // create if single >
+                                 for(int k=0;k<8;k++) if(!fs[k].used) {f=k; fs[k].used=1; break;}
+                                 if(f!=-1) {
+                                     for(int k=0;k<11;k++) fs[f].name[k]=fname[k];
+                                 }
+                             }
+                             
                              if(f!=-1) {
                                   int ptr = fs[f].size;
+                                  if(!append) ptr = 0; // Overwrite
                                   for(int k=cstart;k<cend && ptr<63;k++) fs[f].content[ptr++]=buf[k];
                                   fs[f].content[ptr]=0; fs[f].size=ptr;
-                                  k_print("Appended.\n", &x, &y, 0x0A);
-                             } else k_print("404 (use touch)\n", &x, &y, 0x0C);
+                                  k_print("OK\n", &x, &y, 0x0A);
+                             } else k_print("Err\n", &x, &y, 0x0C);
                              
                          } else if(str_eq(cmd, "ls")) {
                             for(int k=0;k<8;k++) if(fs[k].used) {

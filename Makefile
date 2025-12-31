@@ -1,11 +1,12 @@
 CC := x86_64-elf-gcc
 AS := x86_64-elf-as
 LD := x86_64-elf-ld
-CFLAGS := -m32 -ffreestanding -fno-pie -Wall -Wextra
+CFLAGS := -m32 -ffreestanding -fno-pie -Wall -Wextra -O2 -mno-sse -mno-mmx -mno-avx
 ASFLAGS := --32
 LDFLAGS := -m elf_i386 -T kernel.ld
 
-SRC := kernel.c vga.c
+# Only kernel.c and boot.s
+SRC := kernel.c
 OBJ := $(SRC:.c=.o) boot.o
 TARGET := kernel.elf
 
@@ -13,8 +14,9 @@ TARGET := kernel.elf
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ)
-	$(LD) $(LDFLAGS) -o $@ $^
+# Link boot.o FIRST to ensure Multiboot header is at the front
+$(TARGET): boot.o $(OBJ)
+	$(LD) $(LDFLAGS) -o $@ boot.o kernel.o
 
 boot.o: boot.s
 	$(AS) $(ASFLAGS) -o $@ $<
@@ -28,13 +30,5 @@ run: $(TARGET)
 qemu: run
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f *.o kernel.elf
 
-help:
-	@echo "Usage: make [target]"
-	@echo "Targets:"
-	@echo "  all    - Build the kernel (default)"
-	@echo "  run    - Build and run with QEMU"
-	@echo "  qemu   - Alias for 'run'"
-	@echo "  clean  - Remove built files"
-	@echo "  help   - Show this help message"

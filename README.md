@@ -12,20 +12,19 @@ https://github.com/user-attachments/assets/d90169d0-d8de-4fa8-a32f-3d9a137a0e3c
 ## Features
 - **Monolithic Kernel**: All drivers (VGA, Keyboard, FS) are embedded for maximum stability.
 - **Stack-Based Memory**: Uses stack memory for filesystem and buffers to prevent memory corruption.
-- **Interactive Shell**: Robust command-line interface.
+- **Interactive Shell**: Robust command-line interface with autocorrect.
 - **RamFS**: In-memory filesystem for temporary file storage.
 
 ## Commands
 
 | Command | Usage | Description |
 | :--- | :--- | :--- |
-| `ls` | `ls` | List all files in the filesystem. |
+| `ls` | `ls [-a]` | List files. Use `-a` to show hidden files. |
+| `edit` | `edit <filename>` | Open text editor (Esc to save/exit). |
 | `touch` | `touch <filename>` | Create a new empty file. |
-| `echo` | `echo "text" > <file>` | Write text to a file (overwrites). |
-| `echo` | `echo "text" >> <file>` | Append text to a file. |
-| `cat` | `cat <filename>` | Display the contents of a file. |
+| `cat` | `cat <filename>` | Display file (with syntax highlighting). |
+| `echo` | `echo <text>` | Print text to output. |
 | `clear` | `clear` | Clear the terminal screen. |
-| `color` | `color` | Cycle through different color themes. |
 
 ## Build & Run
 

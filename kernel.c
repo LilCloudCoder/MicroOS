@@ -61,6 +61,77 @@ void kfree(void *ptr) {
   }
 }
 
+typedef struct {
+  int pid;
+  int state;
+  int priority;
+  char name[16];
+} Process;
+
+typedef struct {
+  int total;
+  int free;
+  int used;
+} MemoryInfo;
+
+static Process process_table[MAX_PROCESSES];
+static int current_pid = 1;
+static int process_count = 0;
+
+void process_init() {
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    process_table[i].pid = 0;
+    process_table[i].state = 0;
+    process_table[i].priority = 0;
+  }
+  process_count = 0;
+}
+
+int create_process(const char *name, int priority) {
+  if (process_count >= MAX_PROCESSES)
+    return -1;
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (process_table[i].pid == 0) {
+      process_table[i].pid = current_pid++;
+      process_table[i].state = 1;
+      process_table[i].priority = priority;
+      int j = 0;
+      while (name[j] && j < 15) {
+        process_table[i].name[j] = name[j];
+        j++;
+      }
+      process_table[i].name[j] = 0;
+      process_count++;
+      return process_table[i].pid;
+    }
+  }
+  return -1;
+}
+
+void kill_process(int pid) {
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (process_table[i].pid == pid) {
+      process_table[i].pid = 0;
+      process_table[i].state = 0;
+      process_count--;
+      return;
+    }
+  }
+}
+
+MemoryInfo get_memory_info() {
+  MemoryInfo info;
+  info.total = HEAP_SIZE;
+  int used = 0;
+  for (int i = 0; i < 16; i++) {
+    if (heap_blocks[i].used)
+      used += heap_blocks[i].size;
+  }
+  info.used = used;
+  info.free = info.total - info.used;
+  return info;
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

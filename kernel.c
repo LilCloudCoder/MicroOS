@@ -14,6 +14,53 @@ static inline void outb(unsigned short p, unsigned char v) {
   __asm__ volatile("outb %0, %1" ::"a"(v), "Nd"(p));
 }
 
+typedef struct {
+  int used;
+  int size;
+  char data[256];
+} HeapBlock;
+
+static HeapBlock heap_blocks[16];
+static int heap_initialized = 0;
+
+void heap_init() {
+  for (int i = 0; i < 16; i++) {
+    heap_blocks[i].used = 0;
+    heap_blocks[i].size = 0;
+  }
+  heap_initialized = 1;
+}
+
+void *kmalloc(int size) {
+  if (!heap_initialized)
+    heap_init();
+  for (int i = 0; i < 16; i++) {
+    if (!heap_blocks[i].used && heap_blocks[i].size >= size) {
+      heap_blocks[i].used = 1;
+      return (void *)&heap_blocks[i].data;
+    }
+  }
+  for (int i = 0; i < 16; i++) {
+    if (!heap_blocks[i].used) {
+      heap_blocks[i].used = 1;
+      heap_blocks[i].size = size;
+      return (void *)&heap_blocks[i].data;
+    }
+  }
+  return 0;
+}
+
+void kfree(void *ptr) {
+  if (!ptr)
+    return;
+  for (int i = 0; i < 16; i++) {
+    if ((void *)&heap_blocks[i].data == ptr) {
+      heap_blocks[i].used = 0;
+      return;
+    }
+  }
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

@@ -216,6 +216,33 @@ void load_page_directory(PageDirectory *dir) {
     __asm__("mov %0, %%cr3" : : "r"(dir));
 }
 
+typedef struct {
+  char vendor[13];
+  int family;
+  int model;
+  int stepping;
+  int features;
+} CPUInfo;
+
+static CPUInfo cpu_info = {0, 0, 0, 0, 0};
+
+void detect_cpu() {
+  int eax, ebx, ecx, edx;
+  __asm__("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(0));
+  
+  int *vendor = (int *)cpu_info.vendor;
+  vendor[0] = ebx;
+  vendor[1] = edx;
+  vendor[2] = ecx;
+  cpu_info.vendor[12] = 0;
+  
+  __asm__("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(1));
+  cpu_info.family = (eax >> 8) & 0xF;
+  cpu_info.model = (eax >> 4) & 0xF;
+  cpu_info.stepping = eax & 0xF;
+  cpu_info.features = edx;
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

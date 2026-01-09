@@ -361,7 +361,7 @@ void k_print_syntax(const char *s, int *x, int *y) {
 }
 
 // Known commands list for autocorrect
-const char *known_cmds[] = {"ls", "touch", "cat", "echo", "clear", "edit", "help"};
+const char *known_cmds[] = {"ls", "touch", "cat", "echo", "clear", "edit", "rm", "help", "sysinfo"};
 
 void k_exec_command(char *buf, int *x, int *y, int color, File *fs) {
   char *argv[8];

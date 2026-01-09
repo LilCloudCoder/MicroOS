@@ -392,6 +392,10 @@ void k_exec_command(char *buf, int *x, int *y, int color, File *fs) {
           continue;
         k_print(fs[k].name, x, y, 0x0F);
         k_putc(' ', x, y, 0);
+        k_putc('(', x, y, 0x08);
+        print_number(fs[k].size, x, y, 0x08);
+        k_print("B)", x, y, 0x08);
+        k_putc(' ', x, y, 0);
       }
     k_putc('\n', x, y, color);
   } else if (str_eq(cmd, "touch")) {

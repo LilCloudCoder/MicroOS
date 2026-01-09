@@ -872,12 +872,18 @@ void kernel_main(void) {
   int y = 0;
   int color = 0x0B;
 
+  heap_init();
+  process_init();
+  ata_init();
+  detect_cpu();
+  pci_enumerate();
+  
   for (int i = 0; i < 80 * 25; i++)
     VGA_ADDR[i] = (color << 8) | ' ';
   update_cursor(0, 0);
 
-  k_print("MicroOS v1.0 \n", &x, &y, 0x0E);
-  k_print("Commands: ls [-a], touch, echo, cat, clear, edit\n", &x, &y, 0x07);
+  k_print("MicroOS v2.0 - Advanced Kernel\n", &x, &y, 0x0E);
+  k_print("Commands: ls, cat, echo, touch, rm, edit, sysinfo, help, clear\n", &x, &y, 0x07);
   k_print("$ ", &x, &y, 0x0A);
 
   char buf[128];

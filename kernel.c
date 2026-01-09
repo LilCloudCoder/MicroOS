@@ -270,6 +270,25 @@ void pci_enumerate() {
   }
 }
 
+typedef struct {
+  volatile int locked;
+} Spinlock;
+
+void spinlock_init(Spinlock *lock) {
+  lock->locked = 0;
+}
+
+void spinlock_acquire(Spinlock *lock) {
+  while (lock->locked) {
+    __asm__ volatile("pause");
+  }
+  lock->locked = 1;
+}
+
+void spinlock_release(Spinlock *lock) {
+  lock->locked = 0;
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

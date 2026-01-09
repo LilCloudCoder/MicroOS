@@ -317,6 +317,47 @@ void klog_dump(int *x, int *y, int color) {
   spinlock_release(&kernel_log.lock);
 }
 
+typedef int (*module_init_func)(void);
+typedef void (*module_exit_func)(void);
+
+typedef struct {
+  char name[32];
+  module_init_func init;
+  module_exit_func exit;
+  int loaded;
+} KernelModule;
+
+typedef struct {
+  KernelModule modules[16];
+  int count;
+} ModuleManager;
+
+static ModuleManager module_manager = {0, 0};
+
+int load_module(const char *name, module_init_func init, module_exit_func exit) {
+  if (module_manager.count >= 16)
+    return -1;
+  int idx = module_manager.count++;
+  int i = 0;
+  while (name[i] && i < 31) {
+    module_manager.modules[idx].name[i] = name[i];
+    i++;
+  }
+  module_manager.modules[idx].name[i] = 0;
+  module_manager.modules[idx].init = init;
+  module_manager.modules[idx].exit = exit;
+  if (init)
+    return init();
+  return 0;
+}
+
+void unload_module(int module_id) {
+  if (module_id < 0 || module_id >= module_manager.count)
+    return;
+  if (module_manager.modules[module_id].exit)
+    module_manager.modules[module_id].exit();
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

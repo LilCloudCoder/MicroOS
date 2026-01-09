@@ -289,6 +289,34 @@ void spinlock_release(Spinlock *lock) {
   lock->locked = 0;
 }
 
+typedef struct {
+  char buffer[512];
+  int index;
+  Spinlock lock;
+} KernelLog;
+
+static KernelLog kernel_log = {0, 0, {0}};
+
+void klog(const char *message) {
+  spinlock_acquire(&kernel_log.lock);
+  int i = 0;
+  while (message[i] && kernel_log.index < 511) {
+    kernel_log.buffer[kernel_log.index++] = message[i++];
+  }
+  if (kernel_log.index < 511)
+    kernel_log.buffer[kernel_log.index++] = '\n';
+  kernel_log.buffer[kernel_log.index] = 0;
+  spinlock_release(&kernel_log.lock);
+}
+
+void klog_dump(int *x, int *y, int color) {
+  spinlock_acquire(&kernel_log.lock);
+  k_print("=== KERNEL LOG ===\n", x, y, 0x0E);
+  k_print_syntax(kernel_log.buffer, x, y);
+  k_print("=== END LOG ===\n", x, y, 0x0E);
+  spinlock_release(&kernel_log.lock);
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

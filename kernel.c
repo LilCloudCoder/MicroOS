@@ -528,13 +528,35 @@ void k_exec_command(char *buf, int *x, int *y, int color, File *fs) {
       k_putc(' ', x, y, 0);
     }
     k_putc('\n', x, y, color);
+  } else if (str_eq(cmd, "rm")) {
+    if (argc > 1) {
+      int f = -1;
+      for (int k = 0; k < 8; k++)
+        if (fs[k].used && str_eq(fs[k].name, argv[1]))
+          f = k;
+      if (f != -1) {
+        fs[f].used = 0;
+        fs[f].size = 0;
+        fs[f].content[0] = 0;
+        k_print("Deleted: ", x, y, 0x0A);
+        k_print(argv[1], x, y, 0x0A);
+        k_putc('\n', x, y, color);
+      } else {
+        k_print("Not found: ", x, y, 0x0C);
+        k_print(argv[1], x, y, 0x0C);
+        k_putc('\n', x, y, color);
+      }
+    } else
+      k_print("Usage: rm <filename>\n", x, y, 0x0C);
+  } else if (str_eq(cmd, "sysinfo")) {
+    display_system_info(x, y, color);
   } else {
     k_print("Unknown: ", x, y, 0x0C);
     k_print(cmd, x, y, 0x0C);
     k_putc('\n', x, y, color);
     int best_dist = 100;
     const char *best_match = 0;
-    for (int k = 0; k < 7; k++) {
+    for (int k = 0; k < 9; k++) {
       int d = levenshtein(cmd, known_cmds[k]);
       if (d < best_dist) {
         best_dist = d;

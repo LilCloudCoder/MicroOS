@@ -379,6 +379,39 @@ void parse_boot_params(unsigned int magic, MultibootInfo *info) {
   }
 }
 
+typedef struct {
+  unsigned int size;
+  unsigned int base_low;
+  unsigned int base_high;
+  unsigned int len_low;
+  unsigned int len_high;
+  unsigned int type;
+} MemoryMapEntry;
+
+typedef struct {
+  MemoryMapEntry entries[32];
+  int count;
+} MemoryMap;
+
+static MemoryMap memory_map = {0, 0};
+
+void parse_memory_map(MultibootInfo *info) {
+  if (!info || !(info->flags & 0x40))
+    return;
+  MemoryMapEntry *mmap = (MemoryMapEntry *)info->mmap_addr;
+  int count = 0;
+  unsigned int addr = info->mmap_addr;
+  while (addr < info->mmap_addr + info->mmap_length && count < 32) {
+    mmap = (MemoryMapEntry *)addr;
+    if (mmap->type == 1) {
+      memory_map.entries[count] = *mmap;
+      count++;
+    }
+    addr += mmap->size + 4;
+  }
+  memory_map.count = count;
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

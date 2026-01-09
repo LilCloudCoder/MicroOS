@@ -232,6 +232,11 @@ typedef struct {
   int used;
   char content[64];
   int size;
+  int permissions;
+  int owner_pid;
+  int created_time;
+  int modified_time;
+  int is_directory;
 } File;
 
 // KEYBOARD TABLES

@@ -1,6 +1,9 @@
-/* MicroOS v8: Lookup Table Keyboard */
+/* MicroOS v2.0: Advanced Kernel with Memory Management, Process Scheduler, and Enhanced FS */
 
 #define VGA_ADDR ((volatile unsigned short *)0xB8000)
+#define HEAP_SIZE 4096
+#define MAX_PROCESSES 16
+#define MAX_FILES 32
 
 static inline unsigned char inb(unsigned short p) {
   unsigned char r;

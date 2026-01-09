@@ -554,6 +554,18 @@ void k_exec_command(char *buf, int *x, int *y, int color, File *fs) {
       k_print("Usage: rm <filename>\n", x, y, 0x0C);
   } else if (str_eq(cmd, "sysinfo")) {
     display_system_info(x, y, color);
+  } else if (str_eq(cmd, "help")) {
+    k_print("=== HELP ===\n", x, y, 0x0E);
+    k_print("ls [-a]     : List files\n", x, y, 0x0F);
+    k_print("touch <f>   : Create file\n", x, y, 0x0F);
+    k_print("cat <f>     : Display file\n", x, y, 0x0F);
+    k_print("echo <text> : Print text\n", x, y, 0x0F);
+    k_print("edit <f>    : Edit file\n", x, y, 0x0F);
+    k_print("rm <f>      : Delete file\n", x, y, 0x0F);
+    k_print("sysinfo     : System stats\n", x, y, 0x0F);
+    k_print("clear       : Clear screen\n", x, y, 0x0F);
+    k_print("help        : Show help\n", x, y, 0x0F);
+    k_print("=== END HELP ===\n", x, y, 0x0E);
   } else {
     k_print("Unknown: ", x, y, 0x0C);
     k_print(cmd, x, y, 0x0C);

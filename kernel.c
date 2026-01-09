@@ -358,6 +358,27 @@ void unload_module(int module_id) {
     module_manager.modules[module_id].exit();
 }
 
+typedef struct {
+  unsigned int flags;
+  unsigned int mem_lower;
+  unsigned int mem_upper;
+  unsigned int boot_device;
+  unsigned int cmdline;
+  unsigned int mods_count;
+  unsigned int mods_addr;
+  unsigned int syms[4];
+  unsigned int mmap_length;
+  unsigned int mmap_addr;
+} MultibootInfo;
+
+static MultibootInfo *multiboot_info = 0;
+
+void parse_boot_params(unsigned int magic, MultibootInfo *info) {
+  if (magic == 0x2BADB002) {
+    multiboot_info = info;
+  }
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

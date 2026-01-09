@@ -243,6 +243,33 @@ void detect_cpu() {
   cpu_info.features = edx;
 }
 
+typedef struct {
+  unsigned short vendor_id;
+  unsigned short device_id;
+  unsigned short command;
+  unsigned short status;
+} PCIDevice;
+
+typedef struct {
+  PCIDevice devices[32];
+  int count;
+} PCIBus;
+
+static PCIBus pci_bus = {0, 0};
+
+void pci_enumerate() {
+  pci_bus.count = 0;
+  for (int slot = 0; slot < 32; slot++) {
+    unsigned short vendor = 0xFFFF;
+    outb(0xCF8, 0x80 | (slot << 11));
+    vendor = inb(0xCFC) | (inb(0xCFD) << 8);
+    if (vendor != 0xFFFF && pci_bus.count < 32) {
+      pci_bus.devices[pci_bus.count].vendor_id = vendor;
+      pci_bus.count++;
+    }
+  }
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

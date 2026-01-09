@@ -239,6 +239,12 @@ typedef struct {
   int is_directory;
 } File;
 
+typedef struct {
+  char commands[16][128];
+  int count;
+  int current;
+} CommandHistory;
+
 // KEYBOARD TABLES
 // 0 means no char (like ctrl, alt, F-keys)
 const char kbd_US[128] = {

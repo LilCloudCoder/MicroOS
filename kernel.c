@@ -289,6 +289,10 @@ void spinlock_release(Spinlock *lock) {
   lock->locked = 0;
 }
 
+void k_putc(char c, int *x, int *y, int color);
+void k_print(const char *s, int *x, int *y, int color);
+void k_print_syntax(const char *s, int *x, int *y);
+
 typedef struct {
   char buffer[512];
   int index;

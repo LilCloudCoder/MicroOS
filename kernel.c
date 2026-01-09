@@ -162,6 +162,24 @@ int ata_write_sector(int sector, const void *buffer) {
   return 0;
 }
 
+typedef struct {
+  unsigned int base;
+  unsigned short limit;
+} IDTEntry;
+
+static IDTEntry idt[256];
+
+void register_interrupt(int num, void *handler) {
+  idt[num].base = (unsigned int)handler;
+  idt[num].limit = 0x0800;
+}
+
+void timer_interrupt_handler() {
+}
+
+void keyboard_interrupt_handler() {
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

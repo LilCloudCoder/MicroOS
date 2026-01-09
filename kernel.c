@@ -222,6 +222,40 @@ int str_eq(const char *buf, const char *cmd) {
   return (buf[i] == 0);
 }
 
+void print_number(int num, int *x, int *y, int color) {
+  if (num == 0) {
+    k_putc('0', x, y, color);
+    return;
+  }
+  char digits[16];
+  int len = 0;
+  int n = num;
+  while (n > 0) {
+    digits[len++] = '0' + (n % 10);
+    n /= 10;
+  }
+  for (int i = len - 1; i >= 0; i--)
+    k_putc(digits[i], x, y, color);
+}
+
+void display_system_info(int *x, int *y, int color) {
+  MemoryInfo mem = get_memory_info();
+  k_print("=== SYSTEM INFO ===\n", x, y, 0x0E);
+  k_print("Memory Total: ", x, y, 0x0F);
+  print_number(mem.total, x, y, 0x0C);
+  k_print(" bytes\n", x, y, 0x0F);
+  k_print("Memory Used: ", x, y, 0x0F);
+  print_number(mem.used, x, y, 0x0A);
+  k_print(" bytes\n", x, y, 0x0F);
+  k_print("Memory Free: ", x, y, 0x0F);
+  print_number(mem.free, x, y, 0x02);
+  k_print(" bytes\n", x, y, 0x0F);
+  k_print("Processes: ", x, y, 0x0F);
+  print_number(process_count, x, y, 0x0B);
+  k_print("\n", x, y, 0x0F);
+  k_print("=== END INFO ===\n", x, y, 0x0E);
+}
+
 void k_print(const char *s, int *x, int *y, int color) {
   while (*s)
     k_putc(*s++, x, y, color);

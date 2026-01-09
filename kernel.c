@@ -132,6 +132,36 @@ MemoryInfo get_memory_info() {
   return info;
 }
 
+typedef struct {
+  int status;
+  int last_error;
+  int sector_count;
+} ATADriver;
+
+static ATADriver ata_driver = {0, 0, 0};
+
+void ata_init() {
+  ata_driver.status = 1;
+  ata_driver.last_error = 0;
+  ata_driver.sector_count = 2048;
+}
+
+int ata_read_sector(int sector, void *buffer) {
+  if (!ata_driver.status)
+    return -1;
+  if (sector >= ata_driver.sector_count)
+    return -1;
+  return 0;
+}
+
+int ata_write_sector(int sector, const void *buffer) {
+  if (!ata_driver.status)
+    return -1;
+  if (sector >= ata_driver.sector_count)
+    return -1;
+  return 0;
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);

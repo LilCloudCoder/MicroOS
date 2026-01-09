@@ -180,6 +180,42 @@ void timer_interrupt_handler() {
 void keyboard_interrupt_handler() {
 }
 
+typedef struct {
+  unsigned int present : 1;
+  unsigned int writable : 1;
+  unsigned int user : 1;
+  unsigned int write_through : 1;
+  unsigned int cache_disabled : 1;
+  unsigned int accessed : 1;
+  unsigned int dirty : 1;
+  unsigned int : 5;
+  unsigned int address : 20;
+} PageEntry;
+
+typedef struct {
+  PageEntry entries[1024];
+} PageTable;
+
+typedef struct {
+  PageTable *tables[1024];
+} PageDirectory;
+
+static PageDirectory *kernel_page_dir = 0;
+
+PageDirectory *create_page_directory() {
+  PageDirectory *dir = (PageDirectory *)kmalloc(sizeof(PageDirectory));
+  if (!dir)
+    return 0;
+  for (int i = 0; i < 1024; i++)
+    dir->tables[i] = 0;
+  return dir;
+}
+
+void load_page_directory(PageDirectory *dir) {
+  if (dir)
+    __asm__("mov %0, %%cr3" : : "r"(dir));
+}
+
 void update_cursor(int x, int y) {
   unsigned short pos = y * 80 + x;
   outb(0x3D4, 0x0F);
